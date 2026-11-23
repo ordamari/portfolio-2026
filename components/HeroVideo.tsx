@@ -5,8 +5,20 @@ import { prefersReducedMotion, saveDataEnabled, waitForLcp } from "@/lib/browser
 
 const FPS = 24;
 const LERP = 0.08;
-const DESKTOP_SRC = "/hero/hero-desktop.mp4";
-const MOBILE_SRC = "/hero/hero-mobile.mp4";
+
+/**
+ * First matching query wins. Width breakpoints for the upcoming 1440p / 1080p
+ * desktop masters and the 1080×1920 mobile master go above these two defaults.
+ */
+const HERO_SOURCES: { media: string; src: string }[] = [
+  { media: "(max-aspect-ratio: 1/1)", src: "/hero/hero-mobile.mp4" },
+  { media: "(min-aspect-ratio: 1/1)", src: "/hero/hero-desktop.mp4" },
+];
+
+function selectHeroSource() {
+  const match = HERO_SOURCES.find((source) => window.matchMedia(source.media).matches);
+  return (match ?? HERO_SOURCES[HERO_SOURCES.length - 1]).src;
+}
 
 type Props = {
   progressRef: { current: number };
@@ -51,19 +63,19 @@ export function HeroVideo({ progressRef, stageRef, onReady }: Props) {
   useEffect(() => {
     if (prefersReducedMotion() || saveDataEnabled()) return;
     let cancelled = false;
-    const query = window.matchMedia("(max-aspect-ratio: 1/1)");
+    const queries = HERO_SOURCES.map((source) => window.matchMedia(source.media));
     const apply = () => {
       if (cancelled || prefersReducedMotion()) return;
-      setSrc(query.matches ? MOBILE_SRC : DESKTOP_SRC);
+      setSrc(selectHeroSource());
     };
     waitForLcp().then(() => {
       if (cancelled || prefersReducedMotion() || saveDataEnabled()) return;
       apply();
-      query.addEventListener("change", apply);
+      queries.forEach((query) => query.addEventListener("change", apply));
     });
     return () => {
       cancelled = true;
-      query.removeEventListener("change", apply);
+      queries.forEach((query) => query.removeEventListener("change", apply));
     };
   }, []);
 

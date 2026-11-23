@@ -93,6 +93,9 @@ export function Nav() {
         id={menuId}
         ref={sheetRef}
         className="sheet"
+        role="dialog"
+        aria-modal="true"
+        aria-label="Menu"
         data-open={open ? "true" : "false"}
         inert={!open}
         aria-hidden={!open}

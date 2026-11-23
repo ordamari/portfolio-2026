@@ -82,6 +82,8 @@ export function Intro({ posters }: { posters: Posters }) {
     let alive = true;
     let hintIntro: gsap.core.Tween | null = null;
     let introDone = false;
+    let heldProgress = progressRef.current;
+    let settling = false;
 
     const progressTrigger = ScrollTrigger.create({
       trigger: section,
@@ -89,8 +91,9 @@ export function Intro({ posters }: { posters: Posters }) {
       end: "bottom bottom",
       scrub: true,
       onUpdate: (self) => {
-        progressRef.current = self.progress;
-        document.querySelector("[data-nav-about]")?.toggleAttribute("data-active", self.progress >= 0.33);
+        if (!settling) heldProgress = self.progress;
+        progressRef.current = heldProgress;
+        document.querySelector("[data-nav-about]")?.toggleAttribute("data-active", heldProgress >= 0.33);
       },
     });
 
@@ -155,14 +158,44 @@ export function Intro({ posters }: { posters: Posters }) {
       sync();
     };
     bindScrub();
-    ScrollTrigger.addEventListener("refresh", bindScrub);
+
+    const scrollToCaptured = (progress: number) => {
+      const distance = Math.max(0, section.offsetHeight - window.innerHeight);
+      const top = section.offsetTop + progress * distance;
+      progressRef.current = progress;
+      if (Math.abs(window.scrollY - top) > 0.5) {
+        window.scrollTo({ top, behavior: "instant" });
+      }
+    };
+    const onRefreshInit = () => {
+      if (!settling) heldProgress = progressRef.current;
+    };
+    const onRefresh = () => {
+      bindScrub();
+      scrollToCaptured(heldProgress);
+    };
+    ScrollTrigger.addEventListener("refreshInit", onRefreshInit);
+    ScrollTrigger.addEventListener("refresh", onRefresh);
+
+    const aspectQueries = [
+      window.matchMedia("(max-aspect-ratio: 1/1)"),
+      window.matchMedia("(min-aspect-ratio: 1/1)"),
+    ];
 
     let resizeTimer = 0;
     const onResize = () => {
+      settling = true;
+      scrollToCaptured(heldProgress);
       window.clearTimeout(resizeTimer);
-      resizeTimer = window.setTimeout(() => ScrollTrigger.refresh(), 150);
+      resizeTimer = window.setTimeout(() => {
+        ScrollTrigger.refresh();
+        settling = false;
+        scrollToCaptured(heldProgress);
+      }, 250);
     };
+    aspectQueries.forEach((query) => query.addEventListener("change", onResize));
     window.addEventListener("resize", onResize);
+    window.addEventListener("orientationchange", onResize);
 
     document.fonts.ready.then(() => {
       if (!alive) return;
@@ -194,8 +227,11 @@ export function Intro({ posters }: { posters: Posters }) {
       alive = false;
       hintIntro?.kill();
       progressTrigger.kill();
-      ScrollTrigger.removeEventListener("refresh", bindScrub);
+      ScrollTrigger.removeEventListener("refreshInit", onRefreshInit);
+      ScrollTrigger.removeEventListener("refresh", onRefresh);
+      aspectQueries.forEach((query) => query.removeEventListener("change", onResize));
       window.removeEventListener("resize", onResize);
+      window.removeEventListener("orientationchange", onResize);
       window.clearTimeout(resizeTimer);
       timeline.scrollTrigger?.kill();
       timeline.kill();

@@ -299,7 +299,7 @@ body {
   pointer-events: none;
 }
 
-.art img,
+.art,
 .hero-video {
   position: absolute;
   inset: 0;

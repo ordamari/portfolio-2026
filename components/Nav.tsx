@@ -2,7 +2,7 @@
 
 import { useEffect, useId, useRef, useState } from "react";
 import { ExternalLink } from "@/components/ExternalLink";
-import { navItems } from "@/content/nav";
+import { navLinks, talkLink } from "@/content/nav";
 
 export function Nav() {
   const [open, setOpen] = useState(false);
@@ -56,23 +56,41 @@ export function Nav() {
     return () => desktop.removeEventListener("change", onChange);
   }, []);
 
+  useEffect(() => {
+    const sections = ["experience", "projects"]
+      .map((id) => document.getElementById(id))
+      .filter((node): node is HTMLElement => node !== null);
+    if (sections.length === 0) return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          document.querySelectorAll(`[data-nav="${entry.target.id}"]`).forEach((el) => {
+            el.toggleAttribute("data-active", entry.isIntersecting);
+          });
+        }
+      },
+      { rootMargin: "-40% 0px -55% 0px", threshold: 0 },
+    );
+    sections.forEach((section) => observer.observe(section));
+    return () => observer.disconnect();
+  }, []);
+
+  const close = () => setOpen(false);
+
   return (
-    <nav aria-label="Primary" data-nav>
+    <nav className="nav" aria-label="Primary" data-nav>
       <a className="logo" href="#top">
         or<span className="logo-dot">.</span>
       </a>
       <div className="nav-links">
-        {navItems.map((item) =>
-          item.external ? (
-            <ExternalLink key={item.label} className="nav-link" href={item.href}>
-              {item.label} <span className="ext-arrow" aria-hidden="true">↗</span>
-            </ExternalLink>
-          ) : (
-            <a key={item.label} className="nav-link" href={item.href} data-nav-about>
-              {item.label}
-            </a>
-          ),
-        )}
+        {navLinks.map((item) => (
+          <a key={item.id} className="nav-link" href={item.href} data-nav={item.id}>
+            {item.label}
+          </a>
+        ))}
+        <ExternalLink className="nav-talk" href={talkLink.href}>
+          {talkLink.label} <span className="ext-arrow" aria-hidden="true">↗</span>
+        </ExternalLink>
       </div>
       <button
         ref={burgerRef}
@@ -100,27 +118,20 @@ export function Nav() {
         inert={!open}
         aria-hidden={!open}
       >
-        {navItems.map((item) =>
-          item.external ? (
-            <ExternalLink
-              key={item.label}
-              className="sheet-link"
-              href={item.href}
-              onClick={() => setOpen(false)}
-            >
-              {item.label} <span className="ext-arrow" aria-hidden="true">↗</span>
-            </ExternalLink>
-          ) : (
-            <a
-              key={item.label}
-              className="sheet-link"
-              href={item.href}
-              onClick={() => setOpen(false)}
-            >
-              {item.label}
-            </a>
-          ),
-        )}
+        {navLinks.map((item) => (
+          <a
+            key={item.id}
+            className="sheet-link"
+            href={item.href}
+            data-nav={item.id}
+            onClick={close}
+          >
+            {item.label}
+          </a>
+        ))}
+        <ExternalLink className="sheet-link" href={talkLink.href} onClick={close}>
+          {talkLink.label} <span className="ext-arrow" aria-hidden="true">↗</span>
+        </ExternalLink>
       </div>
     </nav>
   );

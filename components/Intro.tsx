@@ -4,9 +4,9 @@ import { useEffect, useRef, type ReactNode } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { AboutBlock } from "@/components/AboutBlock";
+import { CoreFocus } from "@/components/CoreFocus";
 import { HeroCopy } from "@/components/HeroCopy";
 import { HeroVideo } from "@/components/HeroVideo";
-import { WhatIDo } from "@/components/WhatIDo";
 import { profile } from "@/content/profile";
 import { prefersReducedMotion, scrollToSceneProgress } from "@/lib/browser";
 
@@ -64,7 +64,7 @@ export function Intro({ posters }: { posters: Posters }) {
       const target = event.target;
       if (!(target instanceof HTMLAnchorElement)) return;
       if (target.closest("[data-step='about']")) scrollToSceneProgress(0.5);
-      else if (target.closest("[data-step='what']")) scrollToSceneProgress(1);
+      else if (target.closest("[data-step='focus']")) scrollToSceneProgress(1);
     }
     document.addEventListener("click", onClick);
     document.addEventListener("focusin", onFocusIn);
@@ -93,7 +93,11 @@ export function Intro({ posters }: { posters: Posters }) {
       onUpdate: (self) => {
         if (!settling) heldProgress = self.progress;
         progressRef.current = heldProgress;
-        document.querySelector("[data-nav-about]")?.toggleAttribute("data-active", heldProgress >= 0.33);
+        const stageBottom = stageRef.current?.getBoundingClientRect().bottom ?? 0;
+        const aboutOn = heldProgress >= 0.33 && stageBottom > 1;
+        document.querySelectorAll('[data-nav="about"]').forEach((el) => {
+          el.toggleAttribute("data-active", aboutOn);
+        });
       },
     });
 
@@ -111,7 +115,9 @@ export function Intro({ posters }: { posters: Posters }) {
     const hint = section.querySelector<HTMLElement>("[data-hint]");
     const aboutKicker = section.querySelector("[data-about-kicker]");
     const aboutCard = section.querySelector("[data-about-card]");
-    const whatItems = section.querySelectorAll("[data-what-kicker], [data-what-title], [data-what-card]");
+    const focusItems = section.querySelectorAll("[data-focus-kicker], [data-focus-title], [data-focus-row]");
+    const endScrim = section.querySelector<HTMLElement>(".panel-end .scrim");
+    const portrait = window.matchMedia("(max-aspect-ratio: 1/1)");
 
     timeline.fromTo(
       heroItems,
@@ -125,9 +131,9 @@ export function Intro({ posters }: { posters: Posters }) {
       timeline.to(aboutKicker, { y: -24, opacity: 0, duration: 0.08 }, 0.6);
       timeline.to(aboutCard, { y: -24, opacity: 0, duration: 0.08 }, 0.6);
     }
-    if (whatItems.length) {
+    if (focusItems.length) {
       timeline.fromTo(
-        whatItems,
+        focusItems,
         { y: 24, opacity: 0 },
         { y: 0, opacity: 1, duration: 0.07, stagger: 0.03, immediateRender: false },
         0.74,
@@ -140,10 +146,18 @@ export function Intro({ posters }: { posters: Posters }) {
       const progress = timeline.time() / duration;
       const hero = section.querySelector<HTMLElement>("[data-step='hero']");
       const about = section.querySelector<HTMLElement>("[data-step='about']");
-      const what = section.querySelector<HTMLElement>("[data-step='what']");
+      const focus = section.querySelector<HTMLElement>("[data-step='focus']");
       if (hero) hero.style.pointerEvents = progress < 0.18 ? "auto" : "none";
       if (about) about.style.pointerEvents = progress >= 0.38 && progress < 0.64 ? "auto" : "none";
-      if (what) what.style.pointerEvents = progress >= 0.82 ? "auto" : "none";
+      if (focus) focus.style.pointerEvents = progress >= 0.82 ? "auto" : "none";
+      if (endScrim) {
+        if (portrait.matches) {
+          const fade = progress <= 0.66 ? 0 : progress >= 0.76 ? 1 : (progress - 0.66) / 0.1;
+          endScrim.style.opacity = String(fade);
+        } else {
+          endScrim.style.opacity = "";
+        }
+      }
       if (!hint) return;
       if (progress <= 0) {
         if (introDone) hint.style.opacity = "1";
@@ -256,7 +270,7 @@ export function Intro({ posters }: { posters: Posters }) {
           <div className="vignette" />
           <div className="scrim" />
           <AboutBlock />
-          <WhatIDo />
+          <CoreFocus />
         </div>
         <div className="grain" aria-hidden="true" />
       </div>

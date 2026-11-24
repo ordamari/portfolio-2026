@@ -1304,6 +1304,7 @@ html.js [data-focus-row] {
 .browser-stack {
   position: relative;
   width: 100%;
+  overflow: visible;
 }
 
 .browser {
@@ -1323,13 +1324,29 @@ html.js [data-focus-row] {
 }
 
 @media (min-width: 1024px) {
+  .project-card.is-image-first,
+  .project-card.is-image-first .project-art,
+  .browser-stack {
+    overflow: visible;
+  }
+
+  /* Keep the card's rounded fill while the frame hangs outside it. */
+  .project-card.is-image-first .project-art {
+    border-top-left-radius: 24px;
+    border-bottom-left-radius: 24px;
+  }
+
   .browser-float {
     display: block;
     position: absolute;
-    z-index: 1;
-    width: 60%;
-    left: 0;
-    bottom: 0;
+    z-index: 2;
+    width: 55%;
+    left: -24px;
+    bottom: -32px;
+    box-shadow:
+      0 18px 32px rgb(0 0 0 / 0.5),
+      0 42px 84px rgb(0 0 0 / 0.62),
+      0 0 0 1px rgb(34 224 255 / 0.06);
   }
 
   .browser-float img {

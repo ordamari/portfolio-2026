@@ -1354,6 +1354,13 @@ html.js [data-focus-row] {
     width: 100%;
     height: auto;
   }
+
+  .browser-float .browser-bar span {
+    min-width: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
 }
 
 .browser-bar {

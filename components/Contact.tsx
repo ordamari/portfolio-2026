@@ -1,5 +1,5 @@
 import { ExternalLink } from "@/components/ExternalLink";
-import { LINKEDIN_URL, profile } from "@/content/profile";
+import { CONTACT_EMAIL, LINKEDIN_URL, profile } from "@/content/profile";
 
 export function Contact() {
   return (
@@ -21,6 +21,11 @@ export function Contact() {
             <ExternalLink className="btn btn-primary" href={LINKEDIN_URL}>
               {profile.contactAction}
             </ExternalLink>
+            {CONTACT_EMAIL !== "" ? (
+              <a className="mail-link" href={`mailto:${CONTACT_EMAIL}`}>
+                {CONTACT_EMAIL}
+              </a>
+            ) : null}
           </div>
           <p className="contact-url">{profile.contactUrl}</p>
         </div>

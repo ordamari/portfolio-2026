@@ -1,6 +1,6 @@
 import { ExternalLink } from "@/components/ExternalLink";
 import { footerLinks } from "@/content/nav";
-import { profile } from "@/content/profile";
+import { CONTACT_EMAIL, profile } from "@/content/profile";
 
 export function Footer() {
   return (
@@ -24,6 +24,11 @@ export function Footer() {
               </a>
             ),
           )}
+          {CONTACT_EMAIL !== "" ? (
+            <a className="mail-link" href={`mailto:${CONTACT_EMAIL}`}>
+              {CONTACT_EMAIL}
+            </a>
+          ) : null}
         </nav>
       </div>
     </footer>

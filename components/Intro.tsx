@@ -93,11 +93,6 @@ export function Intro({ posters }: { posters: Posters }) {
       onUpdate: (self) => {
         if (!settling) heldProgress = self.progress;
         progressRef.current = heldProgress;
-        const stageBottom = stageRef.current?.getBoundingClientRect().bottom ?? 0;
-        const aboutOn = heldProgress >= 0.33 && stageBottom > 1;
-        document.querySelectorAll('[data-nav="about"]').forEach((el) => {
-          el.toggleAttribute("data-active", aboutOn);
-        });
       },
     });
 
@@ -181,12 +176,61 @@ export function Intro({ posters }: { posters: Posters }) {
         window.scrollTo({ top, behavior: "instant" });
       }
     };
+    const readingSections = ["experience", "projects", "contact"];
+    const captureReadingPlace = () => {
+      const nodes = readingSections
+        .map((id) => document.getElementById(id))
+        .filter((el): el is HTMLElement => el !== null);
+      const limit = Math.min(120, window.innerHeight * 0.25);
+      let chosen: HTMLElement | null = null;
+      let chosenTop = -Infinity;
+      for (const el of nodes) {
+        const top = el.getBoundingClientRect().top;
+        if (top <= limit && top > chosenTop) {
+          chosen = el;
+          chosenTop = top;
+        }
+      }
+      if (!chosen) {
+        chosenTop = Infinity;
+        for (const el of nodes) {
+          const top = el.getBoundingClientRect().top;
+          if (top < window.innerHeight && top < chosenTop) {
+            chosen = el;
+            chosenTop = top;
+          }
+        }
+      }
+      if (!chosen) return null;
+      return { id: chosen.id, offset: chosen.getBoundingClientRect().top };
+    };
+    const restoreReadingPlace = (place: { id: string; offset: number }) => {
+      const el = document.getElementById(place.id);
+      if (!el) return;
+      const delta = el.getBoundingClientRect().top - place.offset;
+      if (Math.abs(delta) > 0.5) {
+        window.scrollTo({ top: window.scrollY + delta, behavior: "instant" });
+      }
+    };
+    let pinRestore = true;
+    let readingPlace: { id: string; offset: number } | null = null;
+    const rememberPlace = () => {
+      if (settling) return;
+      pinRestore = section.getBoundingClientRect().bottom >= window.innerHeight - 1;
+      if (!pinRestore) readingPlace = captureReadingPlace();
+    };
+    const applyPlace = () => {
+      if (pinRestore) scrollToCaptured(heldProgress);
+      else if (readingPlace) restoreReadingPlace(readingPlace);
+    };
+    rememberPlace();
+    window.addEventListener("scroll", rememberPlace, { passive: true });
     const onRefreshInit = () => {
       if (!settling) heldProgress = progressRef.current;
     };
     const onRefresh = () => {
       bindScrub();
-      scrollToCaptured(heldProgress);
+      applyPlace();
     };
     ScrollTrigger.addEventListener("refreshInit", onRefreshInit);
     ScrollTrigger.addEventListener("refresh", onRefresh);
@@ -199,12 +243,12 @@ export function Intro({ posters }: { posters: Posters }) {
     let resizeTimer = 0;
     const onResize = () => {
       settling = true;
-      scrollToCaptured(heldProgress);
+      applyPlace();
       window.clearTimeout(resizeTimer);
       resizeTimer = window.setTimeout(() => {
         ScrollTrigger.refresh();
         settling = false;
-        scrollToCaptured(heldProgress);
+        applyPlace();
       }, 250);
     };
     aspectQueries.forEach((query) => query.addEventListener("change", onResize));
@@ -246,6 +290,7 @@ export function Intro({ posters }: { posters: Posters }) {
       aspectQueries.forEach((query) => query.removeEventListener("change", onResize));
       window.removeEventListener("resize", onResize);
       window.removeEventListener("orientationchange", onResize);
+      window.removeEventListener("scroll", rememberPlace);
       window.clearTimeout(resizeTimer);
       timeline.scrollTrigger?.kill();
       timeline.kill();

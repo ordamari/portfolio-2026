@@ -57,22 +57,42 @@ export function Nav() {
   }, []);
 
   useEffect(() => {
-    const sections = ["experience", "projects"]
-      .map((id) => document.getElementById(id))
-      .filter((node): node is HTMLElement => node !== null);
-    if (sections.length === 0) return;
-    const observer = new IntersectionObserver(
-      (entries) => {
-        for (const entry of entries) {
-          document.querySelectorAll(`[data-nav="${entry.target.id}"]`).forEach((el) => {
-            el.toggleAttribute("data-active", entry.isIntersecting);
-          });
+    const flow = ["experience", "projects", "contact"];
+    const sync = () => {
+      const line = window.innerHeight * 0.4;
+      let bestId: string | null = null;
+      let bestTop = -Infinity;
+      for (const id of flow) {
+        const el = document.getElementById(id);
+        if (!el) continue;
+        const top = el.getBoundingClientRect().top;
+        if (top <= line && top > bestTop) {
+          bestTop = top;
+          bestId = id;
         }
-      },
-      { rootMargin: "-40% 0px -55% 0px", threshold: 0 },
-    );
-    sections.forEach((section) => observer.observe(section));
-    return () => observer.disconnect();
+      }
+      let active: string | null = null;
+      if (bestId === "experience" || bestId === "projects") active = bestId;
+      else if (!bestId) {
+        const intro = document.getElementById("intro");
+        if (intro) {
+          const distance = Math.max(1, intro.offsetHeight - window.innerHeight);
+          const progress = (window.scrollY - intro.offsetTop) / distance;
+          const inPin = intro.getBoundingClientRect().bottom > window.innerHeight - 1;
+          if (inPin && progress >= 0.33) active = "about";
+        }
+      }
+      document.querySelectorAll("a[data-nav]").forEach((el) => {
+        el.toggleAttribute("data-active", el.getAttribute("data-nav") === active);
+      });
+    };
+    sync();
+    window.addEventListener("scroll", sync, { passive: true });
+    window.addEventListener("resize", sync);
+    return () => {
+      window.removeEventListener("scroll", sync);
+      window.removeEventListener("resize", sync);
+    };
   }, []);
 
   const close = () => setOpen(false);

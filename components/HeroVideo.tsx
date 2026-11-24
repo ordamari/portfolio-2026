@@ -221,6 +221,7 @@ export function HeroVideo({ progressRef, stageRef, onReady }: Props) {
       controls={false}
       disablePictureInPicture
       aria-hidden="true"
+      role="presentation"
       tabIndex={-1}
     />
   );

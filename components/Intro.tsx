@@ -4,9 +4,9 @@ import { useEffect, useRef, type ReactNode } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { AboutBlock } from "@/components/AboutBlock";
+import { CoreFocus } from "@/components/CoreFocus";
 import { HeroCopy } from "@/components/HeroCopy";
 import { HeroVideo } from "@/components/HeroVideo";
-import { WhatIDo } from "@/components/WhatIDo";
 import { profile } from "@/content/profile";
 import { prefersReducedMotion, scrollToSceneProgress } from "@/lib/browser";
 
@@ -64,7 +64,7 @@ export function Intro({ posters }: { posters: Posters }) {
       const target = event.target;
       if (!(target instanceof HTMLAnchorElement)) return;
       if (target.closest("[data-step='about']")) scrollToSceneProgress(0.5);
-      else if (target.closest("[data-step='what']")) scrollToSceneProgress(1);
+      else if (target.closest("[data-step='focus']")) scrollToSceneProgress(1);
     }
     document.addEventListener("click", onClick);
     document.addEventListener("focusin", onFocusIn);
@@ -93,7 +93,6 @@ export function Intro({ posters }: { posters: Posters }) {
       onUpdate: (self) => {
         if (!settling) heldProgress = self.progress;
         progressRef.current = heldProgress;
-        document.querySelector("[data-nav-about]")?.toggleAttribute("data-active", heldProgress >= 0.33);
       },
     });
 
@@ -111,7 +110,9 @@ export function Intro({ posters }: { posters: Posters }) {
     const hint = section.querySelector<HTMLElement>("[data-hint]");
     const aboutKicker = section.querySelector("[data-about-kicker]");
     const aboutCard = section.querySelector("[data-about-card]");
-    const whatItems = section.querySelectorAll("[data-what-kicker], [data-what-title], [data-what-card]");
+    const focusItems = section.querySelectorAll("[data-focus-kicker], [data-focus-title], [data-focus-row]");
+    const endScrim = section.querySelector<HTMLElement>(".panel-end .scrim");
+    const portrait = window.matchMedia("(max-aspect-ratio: 1/1)");
 
     timeline.fromTo(
       heroItems,
@@ -125,9 +126,9 @@ export function Intro({ posters }: { posters: Posters }) {
       timeline.to(aboutKicker, { y: -24, opacity: 0, duration: 0.08 }, 0.6);
       timeline.to(aboutCard, { y: -24, opacity: 0, duration: 0.08 }, 0.6);
     }
-    if (whatItems.length) {
+    if (focusItems.length) {
       timeline.fromTo(
-        whatItems,
+        focusItems,
         { y: 24, opacity: 0 },
         { y: 0, opacity: 1, duration: 0.07, stagger: 0.03, immediateRender: false },
         0.74,
@@ -140,10 +141,18 @@ export function Intro({ posters }: { posters: Posters }) {
       const progress = timeline.time() / duration;
       const hero = section.querySelector<HTMLElement>("[data-step='hero']");
       const about = section.querySelector<HTMLElement>("[data-step='about']");
-      const what = section.querySelector<HTMLElement>("[data-step='what']");
+      const focus = section.querySelector<HTMLElement>("[data-step='focus']");
       if (hero) hero.style.pointerEvents = progress < 0.18 ? "auto" : "none";
       if (about) about.style.pointerEvents = progress >= 0.38 && progress < 0.64 ? "auto" : "none";
-      if (what) what.style.pointerEvents = progress >= 0.82 ? "auto" : "none";
+      if (focus) focus.style.pointerEvents = progress >= 0.82 ? "auto" : "none";
+      if (endScrim) {
+        if (portrait.matches) {
+          const fade = progress <= 0.66 ? 0 : progress >= 0.76 ? 1 : (progress - 0.66) / 0.1;
+          endScrim.style.opacity = String(fade);
+        } else {
+          endScrim.style.opacity = "";
+        }
+      }
       if (!hint) return;
       if (progress <= 0) {
         if (introDone) hint.style.opacity = "1";
@@ -167,12 +176,61 @@ export function Intro({ posters }: { posters: Posters }) {
         window.scrollTo({ top, behavior: "instant" });
       }
     };
+    const readingSections = ["experience", "projects", "contact"];
+    const captureReadingPlace = () => {
+      const nodes = readingSections
+        .map((id) => document.getElementById(id))
+        .filter((el): el is HTMLElement => el !== null);
+      const limit = Math.min(120, window.innerHeight * 0.25);
+      let chosen: HTMLElement | null = null;
+      let chosenTop = -Infinity;
+      for (const el of nodes) {
+        const top = el.getBoundingClientRect().top;
+        if (top <= limit && top > chosenTop) {
+          chosen = el;
+          chosenTop = top;
+        }
+      }
+      if (!chosen) {
+        chosenTop = Infinity;
+        for (const el of nodes) {
+          const top = el.getBoundingClientRect().top;
+          if (top < window.innerHeight && top < chosenTop) {
+            chosen = el;
+            chosenTop = top;
+          }
+        }
+      }
+      if (!chosen) return null;
+      return { id: chosen.id, offset: chosen.getBoundingClientRect().top };
+    };
+    const restoreReadingPlace = (place: { id: string; offset: number }) => {
+      const el = document.getElementById(place.id);
+      if (!el) return;
+      const delta = el.getBoundingClientRect().top - place.offset;
+      if (Math.abs(delta) > 0.5) {
+        window.scrollTo({ top: window.scrollY + delta, behavior: "instant" });
+      }
+    };
+    let pinRestore = true;
+    let readingPlace: { id: string; offset: number } | null = null;
+    const rememberPlace = () => {
+      if (settling) return;
+      pinRestore = section.getBoundingClientRect().bottom >= window.innerHeight - 1;
+      if (!pinRestore) readingPlace = captureReadingPlace();
+    };
+    const applyPlace = () => {
+      if (pinRestore) scrollToCaptured(heldProgress);
+      else if (readingPlace) restoreReadingPlace(readingPlace);
+    };
+    rememberPlace();
+    window.addEventListener("scroll", rememberPlace, { passive: true });
     const onRefreshInit = () => {
       if (!settling) heldProgress = progressRef.current;
     };
     const onRefresh = () => {
       bindScrub();
-      scrollToCaptured(heldProgress);
+      applyPlace();
     };
     ScrollTrigger.addEventListener("refreshInit", onRefreshInit);
     ScrollTrigger.addEventListener("refresh", onRefresh);
@@ -185,12 +243,12 @@ export function Intro({ posters }: { posters: Posters }) {
     let resizeTimer = 0;
     const onResize = () => {
       settling = true;
-      scrollToCaptured(heldProgress);
+      applyPlace();
       window.clearTimeout(resizeTimer);
       resizeTimer = window.setTimeout(() => {
         ScrollTrigger.refresh();
         settling = false;
-        scrollToCaptured(heldProgress);
+        applyPlace();
       }, 250);
     };
     aspectQueries.forEach((query) => query.addEventListener("change", onResize));
@@ -232,6 +290,7 @@ export function Intro({ posters }: { posters: Posters }) {
       aspectQueries.forEach((query) => query.removeEventListener("change", onResize));
       window.removeEventListener("resize", onResize);
       window.removeEventListener("orientationchange", onResize);
+      window.removeEventListener("scroll", rememberPlace);
       window.clearTimeout(resizeTimer);
       timeline.scrollTrigger?.kill();
       timeline.kill();
@@ -256,7 +315,7 @@ export function Intro({ posters }: { posters: Posters }) {
           <div className="vignette" />
           <div className="scrim" />
           <AboutBlock />
-          <WhatIDo />
+          <CoreFocus />
         </div>
         <div className="grain" aria-hidden="true" />
       </div>

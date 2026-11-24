@@ -177,7 +177,7 @@ export const profile = {
       ] as readonly (readonly RichPart[])[],
       chips: ["React", "TypeScript", "three.js"] as readonly string[],
       action: "Visit the site ↗",
-      actionStyle: "ghost" as const,
+      actionStyle: "secondary" as const,
       href: "https://damari-garage.vercel.app/",
       url: "damari-garage.vercel.app",
       image: "/projects/damari-garage-preview.webp",

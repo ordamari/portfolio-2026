@@ -18,7 +18,7 @@ export function HeroCopy() {
           <ExternalLink className="btn btn-primary" href={LINKEDIN_URL}>
             {profile.ctaPrimary}
           </ExternalLink>
-          <a className="btn btn-secondary" href="#about">
+          <a className="btn btn-secondary" href="#projects">
             {profile.ctaSecondary}
           </a>
         </div>

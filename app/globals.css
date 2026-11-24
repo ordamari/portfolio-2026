@@ -1301,6 +1301,12 @@ html.js [data-focus-row] {
   border-right: 1px solid rgb(255 255 255 / 0.07);
 }
 
+.browser-stack {
+  position: relative;
+  width: 100%;
+  overflow: visible;
+}
+
 .browser {
   width: 100%;
   overflow: hidden;
@@ -1310,6 +1316,51 @@ html.js [data-focus-row] {
   box-shadow:
     0 30px 70px rgb(0 0 0 / 0.55),
     0 0 0 1px rgb(34 224 255 / 0.06);
+}
+
+/* Second frame. Hidden, and not requested, below 1024px. */
+.browser-float {
+  display: none;
+}
+
+@media (min-width: 1024px) {
+  .project-card.is-image-first,
+  .project-card.is-image-first .project-art,
+  .browser-stack {
+    overflow: visible;
+  }
+
+  /* Keep the card's rounded fill while the frame hangs outside it. */
+  .project-card.is-image-first .project-art {
+    border-top-left-radius: 24px;
+    border-bottom-left-radius: 24px;
+  }
+
+  .browser-float {
+    display: block;
+    position: absolute;
+    z-index: 2;
+    width: 55%;
+    left: -24px;
+    bottom: -32px;
+    box-shadow:
+      0 18px 32px rgb(0 0 0 / 0.5),
+      0 42px 84px rgb(0 0 0 / 0.62),
+      0 0 0 1px rgb(34 224 255 / 0.06);
+  }
+
+  .browser-float img {
+    display: block;
+    width: 100%;
+    height: auto;
+  }
+
+  .browser-float .browser-bar span {
+    min-width: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
 }
 
 .browser-bar {
@@ -1406,8 +1457,21 @@ html.js [data-focus-row] {
 
 .contact-actions {
   display: flex;
-  justify-content: center;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
   margin-top: 36px;
+}
+
+.mail-link {
+  color: var(--color-muted-nav);
+  font-size: 14px;
+  font-weight: 500;
+  text-decoration: none;
+}
+
+.mail-link:hover {
+  color: var(--color-text);
 }
 
 .contact-url {
@@ -1427,7 +1491,8 @@ html.js [data-focus-row] {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  height: 88px;
+  gap: 24px;
+  min-height: 88px;
 }
 
 .footer-brand {
@@ -1444,7 +1509,9 @@ html.js [data-focus-row] {
 
 .site-footer nav {
   display: flex;
-  gap: 28px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px 28px;
 }
 
 .site-footer nav a {

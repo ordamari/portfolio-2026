@@ -2,6 +2,9 @@ export type RichPart = string | { readonly strong: string };
 
 export const LINKEDIN_URL = "https://www.linkedin.com/in/or-damari";
 
+/** When this is empty, the mailto links are omitted. */
+export const CONTACT_EMAIL: string = "ordamari971@gmail.com";
+
 export const siteTitle = "Or Damari — Frontend & Full-Stack Engineer";
 
 export const heroSub: readonly RichPart[] = [
@@ -150,7 +153,7 @@ export const profile = {
         [{ strong: "OpenAI Structured Outputs" }, ": zero generated text"],
         [{ strong: "Real-time PDF" }, " rendering"],
       ] as readonly (readonly RichPart[])[],
-      chips: [] as readonly string[],
+      chips: ["Next.js", "TypeScript", "PostgreSQL", "pgvector", "OpenAI"],
       action: "Open Winnow ↗",
       actionStyle: "primary" as const,
       href: "https://winnow.ordamari.com",
@@ -184,6 +187,12 @@ export const profile = {
       width: 2380,
       height: 1300,
       alt: "Damari Garage home page",
+      frame: {
+        image: "/projects/damari-garage-calendar.webp",
+        width: 2880,
+        height: 1470,
+        alt: "Damari Garage appointment calendar",
+      },
     },
   ],
   contactKicker: "06 / Let’s talk",

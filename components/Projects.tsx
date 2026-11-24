@@ -58,22 +58,45 @@ export function Projects() {
               </div>
             </div>
             <div className={`project-art art-${project.tone}`}>
-              <div className="browser">
-                <div className="browser-bar" aria-hidden="true">
-                  <i />
-                  <i />
-                  <i />
-                  <span>{project.url}</span>
+              <div className="browser-stack">
+                <div className="browser">
+                  <div className="browser-bar" aria-hidden="true">
+                    <i />
+                    <i />
+                    <i />
+                    <span>{project.url}</span>
+                  </div>
+                  <Image
+                    src={project.image}
+                    alt={project.alt}
+                    width={project.width}
+                    height={project.height}
+                    sizes="(max-width: 767px) 100vw, 560px"
+                    loading="lazy"
+                    style={{ width: "100%", height: "auto" }}
+                  />
                 </div>
-                <Image
-                  src={project.image}
-                  alt={project.alt}
-                  width={project.width}
-                  height={project.height}
-                  sizes="(max-width: 767px) 100vw, 560px"
-                  loading="lazy"
-                  style={{ width: "100%", height: "auto" }}
-                />
+                {"frame" in project ? (
+                  <div className="browser browser-float">
+                    <div className="browser-bar" aria-hidden="true">
+                      <i />
+                      <i />
+                      <i />
+                      <span>{project.url}</span>
+                    </div>
+                    <picture>
+                      <source media="(min-width: 1024px)" srcSet={project.frame.image} />
+                      {/* No src: viewports under 1024px do not request this file. */}
+                      <img
+                        alt={project.frame.alt}
+                        width={project.frame.width}
+                        height={project.frame.height}
+                        loading="lazy"
+                        decoding="async"
+                      />
+                    </picture>
+                  </div>
+                ) : null}
               </div>
             </div>
           </article>
